@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3D Laundry Hub - Laundry Pickup & Delivery | Book Online</title>
+  <meta name="description" content="Book laundry pickup & delivery online. Wash, dry & fold from P295/load. Rush 5-hour service available. Open 10AM-7PM daily.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <style>
+    :root {
+      --pink: #e5007d;
+      --pink-dark: #b80065;
+      --blue: #29abe2;
+      --blue-dark: #1580b3;
+      --navy: #14213d;
+      --ok: #2e9e5b;
+      --err: #d1453b;
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --border: #e3e8ef;
+      --text: #1f2933;
+      --muted: #64748b;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(20, 33, 61, 0.07);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 0 16px; }
+
+    /* Promo bar */
+    .promo {
+      background: var(--navy);
+      color: #fff;
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      padding: 8px 12px;
+    }
+    .promo .zap { color: #ffd166; }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .site-header img { height: 30px; width: auto; }
+    .btn {
+      display: inline-block;
+      border: none;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn-primary {
+      background: var(--pink);
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(229, 0, 125, 0.35);
+    }
+    .btn-primary:active { background: var(--pink-dark); }
+
+    /* Hero */
+    .hero { text-align: center; padding: 36px 0 28px; }
+    .hero img.logo { width: 82%; max-width: 340px; height: auto; margin-bottom: 18px; }
+    .hero h1 {
+      font-size: 26px;
+      line-height: 1.25;
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-weight: 800;
+    }
+    .hero h1 .accent { color: var(--pink); }
+    .hero p.sub { color: var(--muted); font-size: 15px; margin: 0 0 22px; }
+    .hero .cta-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn-big { padding: 14px 26px; font-size: 16px; }
+    .btn-ghost {
+      background: #fff;
+      color: var(--blue-dark);
+      border: 1.5px solid var(--blue);
+      padding: 14px 26px;
+      font-size: 16px;
+    }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .badge {
+      background: #eaf6fc;
+      color: var(--blue-dark);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+    }
+
+    /* Sections */
+    section { padding: 30px 0; }
+    .section-title {
+      text-align: center;
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 4px;
+    }
+    .section-sub { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+
+    /* Steps */
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .step {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .step .num {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--pink));
+      color: #fff;
+      font-weight: 800;
+      line-height: 34px;
+      margin: 0 auto 8px;
+    }
+    .step .emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+    .step h3 { font-size: 14px; margin: 0 0 3px; color: var(--navy); }
+    .step p { font-size: 12px; color: var(--muted); margin: 0; }
+
+    /* Pricing */
+    .price-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 16px;
+      margin-bottom: 12px;
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 9px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-row .name { font-size: 14px; font-weight: 600; }
+    .price-row .name small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+    .price-row .amt { font-size: 16px; font-weight: 800; color: var(--pink); white-space: nowrap; }
+    .rush-banner {
+      background: linear-gradient(135deg, #fff7e6, #ffefd6);
+      border: 1px solid #ffd166;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13.5px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .rush-banner .icon { font-size: 22px; }
+    .rush-banner b { color: var(--navy); }
+
+    /* Booking form */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 { font-size: 15px; margin: 0 0 12px; color: var(--navy); }
+    label { display: block; font-size: 13px; font-weight: 600; margin: 12px 0 6px; }
+    label:first-of-type { margin-top: 0; }
+    input[type="text"], input[type="tel"], input[type="date"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+    .error-text { color: var(--err); font-size: 12.5px; margin-top: 5px; min-height: 15px; }
+
+    /* Service quantity rows */
+    .svc-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .svc-row:last-of-type { border-bottom: none; }
+    .svc-info { flex: 1; }
+    .svc-info .n { font-size: 13.5px; font-weight: 600; }
+    .svc-info .d { font-size: 11.5px; color: var(--muted); }
+    .svc-price { font-size: 13px; font-weight: 700; color: var(--pink); white-space: nowrap; margin-right: 4px; }
+    .qty { display: flex; align-items: center; gap: 8px; }
+    .qty button {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--blue);
+      background: #fff;
+      color: var(--blue-dark);
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .qty button:disabled { opacity: 0.3; cursor: default; }
+    .qty .q { min-width: 18px; text-align: center; font-weight: 700; font-size: 15px; }
+
+    /* Rush toggle */
+    .rush-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff7e6;
+      border: 1px solid #ffd166;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 12px;
+    }
+    .rush-toggle .t { font-size: 13.5px; font-weight: 700; color: var(--navy); }
+    .rush-toggle .t small { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; }
+    .switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: #d8dee7;
+      border-radius: 999px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .slider:before {
+      content: "";
+      position: absolute;
+      width: 22px; height: 22px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .switch input:checked + .slider { background: var(--pink); }
+    .switch input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Total */
+    .total-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--navy);
+      border-radius: 10px;
+      color: #fff;
+    }
+    .total-bar .lbl { font-size: 13px; }
+    .total-bar .lbl small { display: block; opacity: 0.7; font-size: 11px; }
+    .total-bar .val { font-size: 20px; font-weight: 800; }
+
+    /* Slots */
+    .slot-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .slot-btn {
+      padding: 10px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      text-align: center;
+      cursor: pointer;
+    }
+    .slot-btn.selected { border-color: var(--pink); background: var(--pink); color: #fff; }
+    .slot-btn.full {
+      background: #eef1f5;
+      color: #b3bcc7;
+      border-color: #eef1f5;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .slot-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    button#submitBtn {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      background: var(--pink);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(229, 0, 125, 0.35);
+    }
+    button#submitBtn:disabled { background: #d8a0c2; cursor: not-allowed; box-shadow: none; }
+
+    .banner {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      margin-bottom: 14px;
+    }
+    .banner.error { background: #fdeceb; color: var(--err); border: 1px solid #f6c7c3; }
+
+    /* Confirmation */
+    #confirmScreen { display: none; text-align: center; padding-top: 10px; }
+    #confirmScreen .check {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: var(--ok);
+      color: #fff;
+      font-size: 32px;
+      line-height: 60px;
+      margin: 0 auto 14px;
+    }
+    .code-box {
+      background: #eaf6fc;
+      border: 2px dashed var(--blue);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 14px 0;
+    }
+    .code-box .c { font-size: 26px; font-weight: 800; letter-spacing: 3px; color: var(--navy); }
+    .code-box .l { font-size: 12px; color: var(--muted); }
+    .summary-row {
+      display: flex; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px; text-align: left;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row .label { color: var(--muted); }
+    .summary-row .value { font-weight: 600; text-align: right; }
+
+    /* FAQ */
+    details {
+      background: var(--card);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+      padding: 0 14px;
+    }
+    summary {
+      font-size: 14px; font-weight: 600;
+      padding: 13px 0;
+      cursor: pointer;
+      color: var(--navy);
+      list-style: none;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    summary::after { content: "+"; color: var(--pink); font-size: 18px; font-weight: 700; }
+    details[open] summary::after { content: "-"; }
+    details p { font-size: 13px; color: var(--muted); margin: 0 0 13px; }
+
+    /* Footer */
+    footer {
+      background: var(--navy);
+      color: #fff;
+      text-align: center;
+      padding: 28px 16px 34px;
+      margin-top: 30px;
+    }
+    footer .phone {
+      display: inline-block;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 800;
+      font-size: 17px;
+      padding: 12px 26px;
+      border-radius: 999px;
+      text-decoration: none;
+      margin: 10px 0;
+    }
+    footer p { font-size: 12.5px; opacity: 0.75; margin: 6px 0 0; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 6px;
+      vertical-align: -2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="promo"><span class="zap">&#9889;</span> RUSH SERVICE: 5-HOUR TURNAROUND &bull; OPEN DAILY 10AM&ndash;7PM</div>
+
+  <header class="site-header">
+    <div class="bar">
+      <img src="logo.png" alt="3D Laundry Hub">
+      <a href="#book" class="btn btn-primary">Book Now</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <section class="hero">
+      <img class="logo" src="logo.png" alt="3D Laundry Hub logo">
+      <h1>Laundry pickup &amp; delivery, <span class="accent">without the wait</span></h1>
+      <p class="sub">We pick up, wash, dry, fold, and deliver back to your door. Book a slot in under a minute &mdash; no account needed.</p>
+      <div class="cta-row">
+        <a href="#book" class="btn btn-primary btn-big">Book a Pickup</a>
+        <a href="#pricing" class="btn btn-ghost">See Pricing</a>
+      </div>
+      <div class="badges">
+        <span class="badge">&#8369;295 per load</span>
+        <span class="badge">Open 7 days</span>
+        <span class="badge">&#9889; 5-hr rush option</span>
+        <span class="badge">Live slot availability</span>
+      </div>
+    </section>
+
+    <section id="how">
+      <h2 class="section-title">How it works</h2>
+      <p class="section-sub">Four steps. Zero trips to the laundromat.</p>
+      <div class="steps">
+        <div class="step"><span class="emoji">&#128241;</span><div class="num">1</div><h3>Book online</h3><p>Pick your services, pickup &amp; delivery slots</p></div>
+        <div class="step"><span class="emoji">&#128666;</span><div class="num">2</div><h3>We collect</h3><p>Our rider picks up at your chosen hour</p></div>
+        <div class="step"><span class="emoji">&#129532;</span><div class="num">3</div><h3>We wash &amp; fold</h3><p>Weighed with you, washed with care</p></div>
+        <div class="step"><span class="emoji">&#127968;</span><div class="num">4</div><h3>We deliver</h3><p>Fresh laundry back at your door</p></div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <h2 class="section-title">Simple, honest pricing</h2>
+      <p class="section-sub">No zones, no hidden fees &mdash; pickup &amp; delivery included.</p>
+      <div class="price-card">
+        <div class="price-row">
+          <div class="name">Regular Load<small>Everyday clothing &mdash; up to 7 kg</small></div>
+          <div class="amt">&#8369;295<span style="font-size:11px;color:var(--muted);font-weight:400">/load</span></div>
+        </div>
+        <div class="price-row">
+          <div class="name">Thick &amp; Heavy Load<small>Linens, towels, jeans &mdash; up to 5 kg</small></div>
+          <div class="amt">&#8369;295<span style="font-size:11px;color:var(--muted);font-weight:400">/load</span></div>
+        </div>
+        <div class="price-row">
+          <div class="name">Comforter &mdash; Full/Double<small>Per piece</small></div>
+          <div class="amt">&#8369;295</div>
+        </div>
+        <div class="price-row">
+          <div class="name">Comforter &mdash; Queen<small>Per piece</small></div>
+          <div class="amt">&#8369;345</div>
+        </div>
+        <div class="price-row">
+          <div class="name">Comforter &mdash; King<small>Per piece</small></div>
+          <div class="amt">&#8369;395</div>
+        </div>
+      </div>
+      <div class="rush-banner">
+        <span class="icon">&#9889;</span>
+        <div><b>Need it fast? Rush service</b> &mdash; your laundry back in as fast as 5 hours for 1.5&times; the regular price. Toggle it on when booking.</div>
+      </div>
+    </section>
+
+    <section id="book">
+      <h2 class="section-title">Book your pickup</h2>
+      <p class="section-sub">Slots update live &mdash; what you see is what's really available.</p>
+
+      <div id="errorBanner" class="banner error"></div>
+
+      <form id="bookingForm" novalidate>
+        <div class="card">
+          <h2>1 &bull; Your details</h2>
+          <label for="name">Name</label>
+          <input type="text" id="name" autocomplete="name">
+          <div class="error-text" id="err-name"></div>
+          <label for="contact">Contact Number</label>
+          <input type="tel" id="contact" autocomplete="tel" placeholder="e.g. 09171234567">
+          <div class="error-text" id="err-contact"></div>
+          <label for="location">Pickup Address</label>
+          <input type="text" id="location" autocomplete="street-address" placeholder="House/unit, street, barangay">
+          <div class="error-text" id="err-location"></div>
+        </div>
+
+        <div class="card">
+          <h2>2 &bull; Your laundry</h2>
+          <div id="services"></div>
+          <div class="error-text" id="err-services"></div>
+          <div class="rush-toggle">
+            <div class="t">&#9889; Rush service (5-hour turnaround)<small>1.5&times; of total &mdash; subject to same-day slot availability</small></div>
+            <label class="switch"><input type="checkbox" id="rushToggle"><span class="slider"></span></label>
+          </div>
+          <div class="total-bar">
+            <div class="lbl">Estimated total<small>Final amount confirmed at weighing</small></div>
+            <div class="val" id="totalVal">&#8369;0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>3 &bull; Pickup schedule</h2>
+          <label for="pickupDate">Pickup Date</label>
+          <input type="date" id="pickupDate">
+          <div class="error-text" id="err-pickupDate"></div>
+          <label>Pickup Time Slot</label>
+          <div id="pickupSlots"><div class="slot-hint">Choose a date to see available slots.</div></div>
+          <div class="error-text" id="err-pickupSlot"></div>
+        </div>
+
+        <div class="card">
+          <h2>4 &bull; Delivery schedule</h2>
+          <div class="slot-hint" id="turnaroundHint">Delivery is at least 24 hours after pickup.</div>
+          <label for="deliveryDate">Delivery Date</label>
+          <input type="date" id="deliveryDate">
+          <div class="error-text" id="err-deliveryDate"></div>
+          <label>Delivery Time Slot</label>
+          <div id="deliverySlots"><div class="slot-hint">Choose a date to see available slots.</div></div>
+          <div class="error-text" id="err-deliverySlot"></div>
+        </div>
+
+        <button type="submit" id="submitBtn">Book Now &mdash; <span id="btnTotal">&#8369;0</span></button>
+      </form>
+
+      <div id="confirmScreen">
+        <div class="card">
+          <div class="check">&#10003;</div>
+          <h2 style="font-size:18px;">Booking Confirmed!</h2>
+          <p style="color:var(--muted);font-size:13.5px;margin-top:0;">Thank you, <span id="confirmName"></span>! Save your booking code:</p>
+          <div class="code-box">
+            <div class="c" id="confirmCode"></div>
+            <div class="l">Use this code to manage your booking</div>
+          </div>
+          <div class="summary-row"><span class="label">Services</span><span class="value" id="confirmServices"></span></div>
+          <div class="summary-row"><span class="label">Pickup</span><span class="value" id="confirmPickup"></span></div>
+          <div class="summary-row"><span class="label">Delivery</span><span class="value" id="confirmDelivery"></span></div>
+          <div class="summary-row"><span class="label">Estimated Total</span><span class="value" id="confirmTotal"></span></div>
+          <p style="font-size:12.5px;color:var(--muted);margin-top:14px;">
+            Final amount is confirmed after weighing at pickup.
+            Pay by cash or GCash upon verification &mdash; our rider will assist you.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2 class="section-title">Questions, answered</h2>
+      <p class="section-sub"></p>
+      <details>
+        <summary>How does the per-load pricing work?</summary>
+        <p>One load is up to 7 kg of regular clothing, or up to 5 kg of thick and heavy items (linens, towels, jeans). We weigh with a digital scale at pickup, in front of you, so the final price is transparent.</p>
+      </details>
+      <details>
+        <summary>When do I pay?</summary>
+        <p>After weighing and verification. Pay by cash or GCash &mdash; whichever is easier for you.</p>
+      </details>
+      <details>
+        <summary>How fast is Rush service?</summary>
+        <p>As fast as 5 hours from pickup, at 1.5&times; the regular price. Book an early slot (10AM&ndash;1PM pickup) to get same-day delivery.</p>
+      </details>
+      <details>
+        <summary>Can I reschedule or cancel?</summary>
+        <p>Yes &mdash; up to the day before your pickup (at least 24 hours notice). Keep your booking code and call us at 0917 326 0472. Self-service rescheduling is coming soon.</p>
+      </details>
+      <details>
+        <summary>What are your hours?</summary>
+        <p>We pick up and deliver every day, 10:00 AM to 7:00 PM, in one-hour slots you choose at booking.</p>
+      </details>
+    </section>
+
+  </div>
+
+  <footer>
+    <img src="logo.png" alt="3D Laundry Hub" style="height:34px;filter:brightness(0) invert(1);opacity:0.9;">
+    <br>
+    <a class="phone" href="tel:09173260472">&#128222; 0917 326 0472</a>
+    <p>Open daily 10:00 AM &ndash; 7:00 PM</p>
+    <p>&copy; 2026 3D Laundry Hub. Fresh laundry, delivered.</p>
+  </footer>
+
+  <script>
+    // ====== CONFIG ======
+    var API_URL = 'https://script.google.com/macros/s/AKfycby7YtYUymMwzkfJgc5pxge6_zR0FR2Ddfw6ndvMZjZe4oZKZ6F4SxJYLEiwTMeZkJSp/exec';
+
+    var SLOT_LABELS = [
+      '10:00 AM - 11:00 AM', '11:00 AM - 12:00 PM', '12:00 PM - 1:00 PM',
+      '1:00 PM - 2:00 PM', '2:00 PM - 3:00 PM', '3:00 PM - 4:00 PM',
+      '4:00 PM - 5:00 PM', '5:00 PM - 6:00 PM', '6:00 PM - 7:00 PM'
+    ];
+    var SLOT_START_HOUR = 10; // slot i starts at (10 + i):00
+
+    var SERVICES = [
+      { id: 'load_regular', name: 'Regular Load', desc: 'up to 7 kg - everyday clothing', price: 295, unit: 'load' },
+      { id: 'load_heavy', name: 'Thick & Heavy Load', desc: 'up to 5 kg - linens, towels, jeans', price: 295, unit: 'load' },
+      { id: 'comforter_full', name: 'Comforter - Full/Double', desc: 'per piece', price: 295, unit: 'pc' },
+      { id: 'comforter_queen', name: 'Comforter - Queen', desc: 'per piece', price: 345, unit: 'pc' },
+      { id: 'comforter_king', name: 'Comforter - King', desc: 'per piece', price: 395, unit: 'pc' }
+    ];
+    var RUSH_MULTIPLIER = 1.5;
+    var NORMAL_GAP_HOURS = 24;
+    var RUSH_GAP_HOURS = 5;
+
+    // ====== STATE ======
+    var state = {
+      qty: {},
+      rush: false,
+      pickupSlot: null,
+      deliverySlot: null,
+      pickupAvailability: {},
+      deliveryAvailability: {}
+    };
+    SERVICES.forEach(function (s) { state.qty[s.id] = 0; });
+
+    var form = document.getElementById('bookingForm');
+    var submitBtn = document.getElementById('submitBtn');
+    var errorBanner = document.getElementById('errorBanner');
+    var pickupDateInput = document.getElementById('pickupDate');
+    var deliveryDateInput = document.getElementById('deliveryDate');
+    var pickupSlotsEl = document.getElementById('pickupSlots');
+    var deliverySlotsEl = document.getElementById('deliverySlots');
+    var rushToggle = document.getElementById('rushToggle');
+
+    // ====== HELPERS ======
+    function todayISO() {
+      var d = new Date();
+      var tz = d.getTimezoneOffset() * 60000;
+      return new Date(d - tz).toISOString().slice(0, 10);
+    }
+    function addDays(iso, n) {
+      var d = new Date(iso + 'T00:00:00');
+      d.setDate(d.getDate() + n);
+      var tz = d.getTimezoneOffset() * 60000;
+      return new Date(d - tz).toISOString().slice(0, 10);
+    }
+    function peso(n) { return '₱' + n.toLocaleString('en-PH'); }
+    function gapHours() { return state.rush ? RUSH_GAP_HOURS : NORMAL_GAP_HOURS; }
+
+    function slotStartMs(dateStr, slotIdx) {
+      return new Date(dateStr + 'T00:00:00').getTime() + (SLOT_START_HOUR + slotIdx) * 3600000;
+    }
+
+    function minDeliveryDate() {
+      if (!pickupDateInput.value) return addDays(todayISO(), state.rush ? 0 : 1);
+      if (state.rush) {
+        // Rush: same-day possible only if a slot exists >= pickup + 5h
+        if (state.pickupSlot !== null) {
+          var pIdx = SLOT_LABELS.indexOf(state.pickupSlot);
+          var lastStart = slotStartMs(pickupDateInput.value, SLOT_LABELS.length - 1);
+          if (lastStart >= slotStartMs(pickupDateInput.value, pIdx) + RUSH_GAP_HOURS * 3600000) {
+            return pickupDateInput.value;
+          }
+        }
+        return addDays(pickupDateInput.value, 1);
+      }
+      return addDays(pickupDateInput.value, 1);
+    }
+
+    function isSlotTooEarly(slot) {
+      if (!pickupDateInput.value || !state.pickupSlot || !deliveryDateInput.value) return false;
+      var pIdx = SLOT_LABELS.indexOf(state.pickupSlot);
+      var dIdx = SLOT_LABELS.indexOf(slot);
+      return slotStartMs(deliveryDateInput.value, dIdx) <
+             slotStartMs(pickupDateInput.value, pIdx) + gapHours() * 3600000;
+    }
+
+    // ====== SERVICES UI ======
+    function renderServices() {
+      var wrap = document.getElementById('services');
+      wrap.innerHTML = '';
+      SERVICES.forEach(function (s) {
+        var row = document.createElement('div');
+        row.className = 'svc-row';
+        row.innerHTML =
+          '<div class="svc-info"><div class="n">' + s.name + '</div><div class="d">' + s.desc + '</div></div>' +
+          '<div class="svc-price">' + peso(s.price) + '</div>';
+        var qty = document.createElement('div');
+        qty.className = 'qty';
+        var minus = document.createElement('button');
+        minus.type = 'button'; minus.textContent = '−';
+        var q = document.createElement('span');
+        q.className = 'q'; q.textContent = state.qty[s.id];
+        var plus = document.createElement('button');
+        plus.type = 'button'; plus.textContent = '+';
+        minus.disabled = state.qty[s.id] === 0;
+        minus.addEventListener('click', function () { changeQty(s.id, -1); });
+        plus.addEventListener('click', function () { changeQty(s.id, 1); });
+        qty.appendChild(minus); qty.appendChild(q); qty.appendChild(plus);
+        row.appendChild(qty);
+        wrap.appendChild(row);
+      });
+    }
+    function changeQty(id, delta) {
+      state.qty[id] = Math.max(0, Math.min(9, state.qty[id] + delta));
+      document.getElementById('err-services').textContent = '';
+      renderServices();
+      updateTotal();
+    }
+    function baseTotal() {
+      return SERVICES.reduce(function (sum, s) { return sum + s.price * state.qty[s.id]; }, 0);
+    }
+    function estimatedTotal() {
+      var t = baseTotal();
+      return state.rush ? Math.round(t * RUSH_MULTIPLIER) : t;
+    }
+    function updateTotal() {
+      var t = estimatedTotal();
+      document.getElementById('totalVal').textContent = peso(t);
+      document.getElementById('btnTotal').textContent = peso(t);
+    }
+
+    // ====== SLOTS UI ======
+    function renderSlots(container, type) {
+      container.innerHTML = '';
+      container.className = 'slot-grid';
+      SLOT_LABELS.forEach(function (slot) {
+        var btn = document.createElement('div');
+        btn.className = 'slot-btn';
+        btn.textContent = slot.replace(':00', '').replace(':00', '').replace(' - ', '-');
+        var availability = type === 'pickup' ? state.pickupAvailability : state.deliveryAvailability;
+        var remaining = availability[slot];
+        var isFull = remaining !== undefined && remaining <= 0;
+        var tooEarly = type === 'delivery' && isSlotTooEarly(slot);
+        if (isFull || tooEarly) {
+          btn.classList.add('full');
+        } else {
+          btn.addEventListener('click', function () { selectSlot(type, slot); });
+        }
+        var selected = type === 'pickup' ? state.pickupSlot : state.deliverySlot;
+        if (selected === slot && !isFull && !tooEarly) btn.classList.add('selected');
+        container.appendChild(btn);
+      });
+    }
+
+    function selectSlot(type, slot) {
+      if (type === 'pickup') {
+        state.pickupSlot = slot;
+        document.getElementById('err-pickupSlot').textContent = '';
+        syncDeliveryConstraints();
+        renderSlots(pickupSlotsEl, 'pickup');
+      } else {
+        state.deliverySlot = slot;
+        document.getElementById('err-deliverySlot').textContent = '';
+        renderSlots(deliverySlotsEl, 'delivery');
+      }
+    }
+
+    function syncDeliveryConstraints() {
+      var minD = minDeliveryDate();
+      deliveryDateInput.min = minD;
+      if (pickupDateInput.value && (!deliveryDateInput.value || deliveryDateInput.value < minD)) {
+        deliveryDateInput.value = minD;
+        loadAvailability('delivery');
+        return;
+      }
+      if (state.deliverySlot && isSlotTooEarly(state.deliverySlot)) state.deliverySlot = null;
+      if (deliveryDateInput.value) renderSlots(deliverySlotsEl, 'delivery');
+    }
+
+    // ====== API ======
+    function api(payload) {
+      return fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload) // text/plain body avoids CORS preflight
+      }).then(function (r) { return r.json(); });
+    }
+
+    function loadAvailability(type) {
+      var dateInput = type === 'pickup' ? pickupDateInput : deliveryDateInput;
+      var container = type === 'pickup' ? pickupSlotsEl : deliverySlotsEl;
+      if (type === 'pickup') { state.pickupSlot = null; } else { state.deliverySlot = null; }
+      if (!dateInput.value) {
+        container.className = '';
+        container.innerHTML = '<div class="slot-hint">Choose a date to see available slots.</div>';
+        return;
+      }
+      container.className = '';
+      container.innerHTML = '<div class="slot-hint">Loading availability&hellip;</div>';
+      api({ action: 'availability', type: type, date: dateInput.value })
+        .then(function (res) {
+          if (!res.success) throw new Error(res.error || 'availability failed');
+          if (type === 'pickup') { state.pickupAvailability = res.remaining; }
+          else { state.deliveryAvailability = res.remaining; }
+          renderSlots(container, type);
+        })
+        .catch(function () {
+          container.className = '';
+          container.innerHTML = '<div class="slot-hint">Could not load availability. Check your connection and re-pick the date.</div>';
+        });
+    }
+
+    // ====== EVENTS ======
+    rushToggle.addEventListener('change', function () {
+      state.rush = rushToggle.checked;
+      document.getElementById('turnaroundHint').textContent = state.rush
+        ? '⚡ Rush: delivery as fast as 5 hours after pickup.'
+        : 'Delivery is at least 24 hours after pickup.';
+      updateTotal();
+      syncDeliveryConstraints();
+    });
+
+    pickupDateInput.min = todayISO();
+    deliveryDateInput.min = addDays(todayISO(), 1);
+
+    pickupDateInput.addEventListener('change', function () {
+      document.getElementById('err-pickupDate').textContent = '';
+      if (pickupDateInput.value && pickupDateInput.value < todayISO()) {
+        pickupDateInput.value = todayISO();
+      }
+      loadAvailability('pickup');
+      syncDeliveryConstraints();
+    });
+
+    deliveryDateInput.addEventListener('change', function () {
+      document.getElementById('err-deliveryDate').textContent = '';
+      var minD = minDeliveryDate();
+      if (deliveryDateInput.value && deliveryDateInput.value < minD) {
+        deliveryDateInput.value = minD;
+      }
+      loadAvailability('delivery');
+    });
+
+    // ====== VALIDATE & SUBMIT ======
+    function showBanner(msg) {
+      errorBanner.textContent = msg;
+      errorBanner.style.display = 'block';
+      errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function clearErrors() {
+      document.querySelectorAll('.error-text').forEach(function (el) { el.textContent = ''; });
+      errorBanner.style.display = 'none';
+    }
+    function setErr(f, m) { document.getElementById('err-' + f).textContent = m; }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearErrors();
+      var valid = true;
+      var name = document.getElementById('name').value.trim();
+      var contact = document.getElementById('contact').value.trim();
+      var location = document.getElementById('location').value.trim();
+
+      if (!name) { setErr('name', 'Name is required.'); valid = false; }
+      if (!contact || !/^[0-9+\-\s()]{7,15}$/.test(contact)) { setErr('contact', 'Enter a valid contact number.'); valid = false; }
+      if (!location) { setErr('location', 'Pickup address is required.'); valid = false; }
+      if (baseTotal() === 0) { setErr('services', 'Add at least one load or comforter.'); valid = false; }
+      if (!pickupDateInput.value) { setErr('pickupDate', 'Pickup date is required.'); valid = false; }
+      if (!deliveryDateInput.value) { setErr('deliveryDate', 'Delivery date is required.'); valid = false; }
+      if (!state.pickupSlot) { setErr('pickupSlot', 'Choose a pickup time slot.'); valid = false; }
+      if (!state.deliverySlot) { setErr('deliverySlot', 'Choose a delivery time slot.'); valid = false; }
+      if (state.pickupSlot && state.deliverySlot && isSlotTooEarly(state.deliverySlot)) {
+        setErr('deliverySlot', 'That delivery slot is inside the turnaround time. Pick a later one.'); valid = false;
+      }
+      if (!valid) return;
+
+      var services = SERVICES.filter(function (s) { return state.qty[s.id] > 0; })
+        .map(function (s) { return { id: s.id, name: s.name, qty: state.qty[s.id], price: s.price }; });
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span>Booking&hellip;';
+
+      api({
+        action: 'submit',
+        name: name, contact: contact, location: location,
+        pickupDate: pickupDateInput.value, pickupSlot: state.pickupSlot,
+        deliveryDate: deliveryDateInput.value, deliverySlot: state.deliverySlot,
+        services: services, rush: state.rush, estimatedTotal: estimatedTotal()
+      }).then(function (res) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Book Now &mdash; <span id="btnTotal">' + peso(estimatedTotal()) + '</span>';
+        if (!res.success) {
+          showBanner(res.error || 'Something went wrong. Please try again.');
+          if (res.field === 'pickup') loadAvailability('pickup');
+          if (res.field === 'delivery') loadAvailability('delivery');
+          return;
+        }
+        var b = res.booking;
+        document.getElementById('confirmName').textContent = b.name;
+        document.getElementById('confirmCode').textContent = b.code;
+        document.getElementById('confirmServices').textContent = services.map(function (s) { return s.qty + '× ' + s.name; }).join(', ') + (state.rush ? ' (RUSH)' : '');
+        document.getElementById('confirmPickup').textContent = b.pickupDate + ', ' + b.pickupSlot;
+        document.getElementById('confirmDelivery').textContent = b.deliveryDate + ', ' + b.deliverySlot;
+        document.getElementById('confirmTotal').textContent = peso(b.estimatedTotal) + ' (estimated)';
+        form.style.display = 'none';
+        document.getElementById('confirmScreen').style.display = 'block';
+        document.getElementById('confirmScreen').scrollIntoView({ behavior: 'smooth' });
+      }).catch(function () {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Book Now &mdash; <span id="btnTotal">' + peso(estimatedTotal()) + '</span>';
+        showBanner('Could not submit. Please check your connection and try again.');
+      });
+    });
+
+    // ====== INIT ======
+    renderServices();
+    updateTotal();
+  </script>
+</body>
+</html>
