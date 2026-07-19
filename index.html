@@ -556,7 +556,53 @@
             Final amount is confirmed after weighing at pickup.
             Pay by cash or GCash upon verification &mdash; our rider will assist you.
           </p>
+          <a href="#track" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;box-sizing:border-box;">Track this booking</a>
         </div>
+      </div>
+    </section>
+
+    <section id="track">
+      <h2 class="section-title">Track my booking</h2>
+      <p class="section-sub">Enter your booking code and the number you booked with.</p>
+      <div class="card">
+        <label for="trackCode">Booking Code</label>
+        <input type="text" id="trackCode" placeholder="e.g. 3D-4F7K" autocapitalize="characters">
+        <label for="trackPhone">Contact Number</label>
+        <input type="tel" id="trackPhone" placeholder="e.g. 09171234567">
+        <div class="error-text" id="err-track"></div>
+        <button type="button" id="trackBtn" class="btn btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;">Find My Booking</button>
+      </div>
+
+      <div class="card" id="trackResult" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h2 style="margin:0;">Booking <span id="tbCode"></span></h2>
+          <span id="tbStatus" class="badge"></span>
+        </div>
+        <div class="summary-row"><span class="label">Services</span><span class="value" id="tbServices"></span></div>
+        <div class="summary-row"><span class="label">Pickup</span><span class="value" id="tbPickup"></span></div>
+        <div class="summary-row"><span class="label">Delivery</span><span class="value" id="tbDelivery"></span></div>
+        <div class="summary-row"><span class="label" id="tbAmountLabel">Amount</span><span class="value" id="tbAmount"></span></div>
+        <div class="summary-row"><span class="label">Payment</span><span class="value" id="tbPayment"></span></div>
+        <div class="slot-hint" id="tbAmountNote"></div>
+        <div id="tbActions" style="display:none;margin-top:14px;">
+          <button type="button" id="tbReschedBtn" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;margin-bottom:8px;">Reschedule</button>
+          <button type="button" id="tbCancelBtn" class="btn" style="width:100%;padding:12px;border-radius:12px;font-size:14px;background:#fdeceb;color:var(--err);border:1.5px solid #f6c7c3;">Cancel this booking</button>
+        </div>
+        <div class="slot-hint" id="tbLocked" style="display:none;">Changes are closed within 24 hours of pickup. Need help? Call <a href="tel:09173260472">0917 326 0472</a>.</div>
+      </div>
+
+      <div class="card" id="reschedPanel" style="display:none;">
+        <h2>New schedule</h2>
+        <label for="rsPickupDate">New Pickup Date</label>
+        <input type="date" id="rsPickupDate">
+        <label>New Pickup Time Slot</label>
+        <div id="rsPickupSlots"><div class="slot-hint">Choose a date to see available slots.</div></div>
+        <label for="rsDeliveryDate">New Delivery Date</label>
+        <input type="date" id="rsDeliveryDate">
+        <label>New Delivery Time Slot</label>
+        <div id="rsDeliverySlots"><div class="slot-hint">Choose a date to see available slots.</div></div>
+        <div class="error-text" id="err-resched"></div>
+        <button type="button" id="rsSaveBtn" class="btn btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;margin-top:10px;">Save New Schedule</button>
       </div>
     </section>
 
@@ -577,7 +623,11 @@
       </details>
       <details>
         <summary>Can I reschedule or cancel?</summary>
-        <p>Yes &mdash; up to the day before your pickup (at least 24 hours notice). Keep your booking code and call us at 0917 326 0472. Self-service rescheduling is coming soon.</p>
+        <p>Yes &mdash; up to 24 hours before your pickup, right on this site. Scroll to <a href="#track">Track my booking</a>, enter your booking code and contact number, and use the Reschedule or Cancel buttons. Inside 24 hours, call us at 0917 326 0472.</p>
+      </details>
+      <details>
+        <summary>How do I know my final amount?</summary>
+        <p>After we weigh your laundry at pickup, the confirmed amount appears in <a href="#track">Track my booking</a> &mdash; look for the green &ldquo;Final Amount&rdquo;. Until then you'll see your booking estimate.</p>
       </details>
       <details>
         <summary>What are your hours?</summary>
@@ -591,6 +641,7 @@
     <img src="logo.png" alt="3D Laundry Hub" style="height:34px;filter:brightness(0) invert(1);opacity:0.9;">
     <br>
     <a class="phone" href="tel:09173260472">&#128222; 0917 326 0472</a>
+    <p><a href="#track" style="color:#fff;opacity:0.9;">Track my booking</a> &nbsp;&bull;&nbsp; <a href="#pricing" style="color:#fff;opacity:0.9;">Pricing</a> &nbsp;&bull;&nbsp; <a href="#faq" style="color:#fff;opacity:0.9;">FAQ</a></p>
     <p>Open daily 10:00 AM &ndash; 7:00 PM</p>
     <p>&copy; 2026 3D Laundry Hub. Fresh laundry, delivered.</p>
   </footer>
@@ -920,6 +971,172 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = 'Book Now &mdash; <span id="btnTotal">' + peso(estimatedTotal()) + '</span>';
         showBanner('Could not submit. Please check your connection and try again.');
+      });
+    });
+
+    // ====== TRACK / CANCEL / RESCHEDULE ======
+    var track = { booking: null, code: '', phone: '' };
+    var rs = { pickupSlot: null, deliverySlot: null, pickupAvail: {}, deliveryAvail: {} };
+    var rsPickupDate = document.getElementById('rsPickupDate');
+    var rsDeliveryDate = document.getElementById('rsDeliveryDate');
+    var rsPickupSlots = document.getElementById('rsPickupSlots');
+    var rsDeliverySlots = document.getElementById('rsDeliverySlots');
+
+    function statusColor(s) {
+      if (s === 'Delivered') return ['#e7f6ec', '#217a46'];
+      if (s === 'Cancelled') return ['#fdeceb', '#d1453b'];
+      if (s === 'Out for Delivery') return ['#fff7e6', '#9a6b00'];
+      return ['#eaf6fc', '#1580b3'];
+    }
+
+    function showTrackResult(b) {
+      track.booking = b;
+      document.getElementById('tbCode').textContent = b.code;
+      var st = document.getElementById('tbStatus');
+      st.textContent = b.status;
+      var c = statusColor(b.status);
+      st.style.background = c[0]; st.style.color = c[1];
+      document.getElementById('tbServices').textContent = (b.services || 'See staff') + (b.rush ? ' (RUSH)' : '');
+      document.getElementById('tbPickup').textContent = b.pickupDate + ', ' + b.pickupSlot;
+      document.getElementById('tbDelivery').textContent = b.deliveryDate + ', ' + b.deliverySlot;
+      var amountEl = document.getElementById('tbAmount');
+      var note = document.getElementById('tbAmountNote');
+      if (b.finalAmount !== null) {
+        document.getElementById('tbAmountLabel').textContent = 'Final Amount';
+        amountEl.textContent = peso(b.finalAmount);
+        amountEl.style.color = 'var(--ok)';
+        note.textContent = '✓ Confirmed after weighing' + (b.payment === 'Unpaid' ? ' — payable by cash or GCash on delivery.' : '.');
+      } else {
+        document.getElementById('tbAmountLabel').textContent = 'Estimated Amount';
+        amountEl.textContent = b.estimatedTotal !== null ? peso(b.estimatedTotal) : 'To be confirmed';
+        amountEl.style.color = '';
+        note.textContent = 'Final amount will appear here after weighing at pickup.';
+      }
+      document.getElementById('tbPayment').textContent = b.payment;
+      document.getElementById('tbActions').style.display = b.canModify ? 'block' : 'none';
+      document.getElementById('tbLocked').style.display =
+        (!b.canModify && b.status !== 'Cancelled' && b.status !== 'Delivered') ? 'block' : 'none';
+      document.getElementById('trackResult').style.display = 'block';
+      document.getElementById('reschedPanel').style.display = 'none';
+    }
+
+    document.getElementById('trackBtn').addEventListener('click', function () {
+      var code = document.getElementById('trackCode').value.trim().toUpperCase();
+      var phone = document.getElementById('trackPhone').value.trim();
+      var err = document.getElementById('err-track');
+      err.textContent = '';
+      if (!code || !phone) { err.textContent = 'Enter both your booking code and contact number.'; return; }
+      var btn = document.getElementById('trackBtn');
+      btn.disabled = true; btn.textContent = 'Searching…';
+      track.code = code; track.phone = phone;
+      api({ action: 'find', code: code, contact: phone })
+        .then(function (res) {
+          btn.disabled = false; btn.textContent = 'Find My Booking';
+          if (!res.success) { err.textContent = res.error; document.getElementById('trackResult').style.display = 'none'; return; }
+          showTrackResult(res.booking);
+        })
+        .catch(function () {
+          btn.disabled = false; btn.textContent = 'Find My Booking';
+          err.textContent = 'Connection problem. Please try again.';
+        });
+    });
+
+    document.getElementById('tbCancelBtn').addEventListener('click', function () {
+      if (!window.confirm('Cancel booking ' + track.booking.code + '? This cannot be undone.')) return;
+      var btn = document.getElementById('tbCancelBtn');
+      btn.disabled = true; btn.textContent = 'Cancelling…';
+      api({ action: 'cancel', code: track.code, contact: track.phone })
+        .then(function (res) {
+          btn.disabled = false; btn.textContent = 'Cancel this booking';
+          if (!res.success) { document.getElementById('err-track').textContent = res.error; return; }
+          showTrackResult(res.booking);
+        })
+        .catch(function () { btn.disabled = false; btn.textContent = 'Cancel this booking'; });
+    });
+
+    // --- Reschedule mini-picker (uses the booking's own rush rule) ---
+    function rsGapHours() { return track.booking && track.booking.rush ? RUSH_GAP_HOURS : NORMAL_GAP_HOURS; }
+    function rsTooEarly(slot) {
+      if (!rsPickupDate.value || !rs.pickupSlot || !rsDeliveryDate.value) return false;
+      var pIdx = SLOT_LABELS.indexOf(rs.pickupSlot);
+      var dIdx = SLOT_LABELS.indexOf(slot);
+      return slotStartMs(rsDeliveryDate.value, dIdx) < slotStartMs(rsPickupDate.value, pIdx) + rsGapHours() * 3600000;
+    }
+    function rsRender(container, type) {
+      container.innerHTML = '';
+      container.className = 'slot-grid';
+      SLOT_LABELS.forEach(function (slot) {
+        var btn = document.createElement('div');
+        btn.className = 'slot-btn';
+        btn.textContent = slot.replace(':00', '').replace(':00', '').replace(' - ', '-');
+        var avail = type === 'pickup' ? rs.pickupAvail : rs.deliveryAvail;
+        var full = avail[slot] !== undefined && avail[slot] <= 0;
+        var dateVal = (type === 'pickup' ? rsPickupDate : rsDeliveryDate).value;
+        var past = dateVal && isSlotPast(dateVal, SLOT_LABELS.indexOf(slot));
+        var early = type === 'delivery' && rsTooEarly(slot);
+        if (full || past || early) {
+          btn.classList.add('full');
+        } else {
+          btn.addEventListener('click', function () {
+            if (type === 'pickup') { rs.pickupSlot = slot; if (rs.deliverySlot && rsTooEarly(rs.deliverySlot)) rs.deliverySlot = null; rsRender(rsDeliverySlots, 'delivery'); }
+            else { rs.deliverySlot = slot; }
+            rsRender(container, type);
+          });
+        }
+        var sel = type === 'pickup' ? rs.pickupSlot : rs.deliverySlot;
+        if (sel === slot && !full && !past && !early) btn.classList.add('selected');
+        container.appendChild(btn);
+      });
+    }
+    function rsLoad(type) {
+      var input = type === 'pickup' ? rsPickupDate : rsDeliveryDate;
+      var container = type === 'pickup' ? rsPickupSlots : rsDeliverySlots;
+      if (type === 'pickup') rs.pickupSlot = null; else rs.deliverySlot = null;
+      if (!input.value) return;
+      container.className = '';
+      container.innerHTML = '<div class="slot-hint">Loading availability&hellip;</div>';
+      api({ action: 'availability', type: type, date: input.value })
+        .then(function (res) {
+          if (type === 'pickup') rs.pickupAvail = res.remaining; else rs.deliveryAvail = res.remaining;
+          rsRender(container, type);
+        })
+        .catch(function () { container.innerHTML = '<div class="slot-hint">Could not load availability.</div>'; });
+    }
+    document.getElementById('tbReschedBtn').addEventListener('click', function () {
+      var p = document.getElementById('reschedPanel');
+      p.style.display = p.style.display === 'none' ? 'block' : 'none';
+      rsPickupDate.min = minPickupDate();
+      rsDeliveryDate.min = addDays(todayISO(), 1);
+      p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    rsPickupDate.addEventListener('change', function () {
+      if (rsPickupDate.value && rsPickupDate.value < minPickupDate()) rsPickupDate.value = minPickupDate();
+      var minD = addDays(rsPickupDate.value || todayISO(), track.booking && track.booking.rush ? 0 : 1);
+      rsDeliveryDate.min = minD;
+      if (rsDeliveryDate.value && rsDeliveryDate.value < minD) { rsDeliveryDate.value = minD; rsLoad('delivery'); }
+      rsLoad('pickup');
+    });
+    rsDeliveryDate.addEventListener('change', function () { rsLoad('delivery'); });
+    document.getElementById('rsSaveBtn').addEventListener('click', function () {
+      var err = document.getElementById('err-resched');
+      err.textContent = '';
+      if (!rsPickupDate.value || !rs.pickupSlot || !rsDeliveryDate.value || !rs.deliverySlot) {
+        err.textContent = 'Choose new pickup and delivery dates and time slots.'; return;
+      }
+      var btn = document.getElementById('rsSaveBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      api({
+        action: 'reschedule', code: track.code, contact: track.phone,
+        pickupDate: rsPickupDate.value, pickupSlot: rs.pickupSlot,
+        deliveryDate: rsDeliveryDate.value, deliverySlot: rs.deliverySlot
+      }).then(function (res) {
+        btn.disabled = false; btn.textContent = 'Save New Schedule';
+        if (!res.success) { err.textContent = res.error; return; }
+        showTrackResult(res.booking);
+        document.getElementById('trackResult').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = 'Save New Schedule';
+        err.textContent = 'Connection problem. Please try again.';
       });
     });
 
