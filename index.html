@@ -638,22 +638,32 @@
     var rushToggle = document.getElementById('rushToggle');
 
     // ====== HELPERS ======
+    // All schedule logic is pinned to Philippine time (+08:00, no DST) so it
+    // behaves correctly no matter what timezone the viewer's device is set to.
+    var PH_OFFSET = '+08:00';
     function todayISO() {
-      var d = new Date();
-      var tz = d.getTimezoneOffset() * 60000;
-      return new Date(d - tz).toISOString().slice(0, 10);
+      return new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
     }
     function addDays(iso, n) {
-      var d = new Date(iso + 'T00:00:00');
-      d.setDate(d.getDate() + n);
-      var tz = d.getTimezoneOffset() * 60000;
-      return new Date(d - tz).toISOString().slice(0, 10);
+      var d = new Date(iso + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10);
     }
     function peso(n) { return '₱' + n.toLocaleString('en-PH'); }
     function gapHours() { return state.rush ? RUSH_GAP_HOURS : NORMAL_GAP_HOURS; }
 
     function slotStartMs(dateStr, slotIdx) {
-      return new Date(dateStr + 'T00:00:00').getTime() + (SLOT_START_HOUR + slotIdx) * 3600000;
+      return Date.parse(dateStr + 'T00:00:00' + PH_OFFSET) + (SLOT_START_HOUR + slotIdx) * 3600000;
+    }
+
+    function isSlotPast(dateStr, slotIdx) {
+      return slotStartMs(dateStr, slotIdx) <= Date.now();
+    }
+
+    /** Earliest date with at least one still-bookable pickup slot (PH time). */
+    function minPickupDate() {
+      var t = todayISO();
+      return isSlotPast(t, SLOT_LABELS.length - 1) ? addDays(t, 1) : t;
     }
 
     function minDeliveryDate() {
@@ -736,7 +746,9 @@
         var availability = type === 'pickup' ? state.pickupAvailability : state.deliveryAvailability;
         var remaining = availability[slot];
         var isFull = remaining !== undefined && remaining <= 0;
-        var tooEarly = type === 'delivery' && isSlotTooEarly(slot);
+        var dateVal = (type === 'pickup' ? pickupDateInput : deliveryDateInput).value;
+        var past = dateVal && isSlotPast(dateVal, SLOT_LABELS.indexOf(slot));
+        var tooEarly = (type === 'delivery' && isSlotTooEarly(slot)) || past;
         if (isFull || tooEarly) {
           btn.classList.add('full');
         } else {
@@ -815,13 +827,13 @@
       syncDeliveryConstraints();
     });
 
-    pickupDateInput.min = todayISO();
+    pickupDateInput.min = minPickupDate();
     deliveryDateInput.min = addDays(todayISO(), 1);
 
     pickupDateInput.addEventListener('change', function () {
       document.getElementById('err-pickupDate').textContent = '';
-      if (pickupDateInput.value && pickupDateInput.value < todayISO()) {
-        pickupDateInput.value = todayISO();
+      if (pickupDateInput.value && pickupDateInput.value < minPickupDate()) {
+        pickupDateInput.value = minPickupDate();
       }
       loadAvailability('pickup');
       syncDeliveryConstraints();
@@ -863,6 +875,10 @@
       if (!pickupDateInput.value) { setErr('pickupDate', 'Pickup date is required.'); valid = false; }
       if (!deliveryDateInput.value) { setErr('deliveryDate', 'Delivery date is required.'); valid = false; }
       if (!state.pickupSlot) { setErr('pickupSlot', 'Choose a pickup time slot.'); valid = false; }
+      if (state.pickupSlot && pickupDateInput.value && isSlotPast(pickupDateInput.value, SLOT_LABELS.indexOf(state.pickupSlot))) {
+        setErr('pickupSlot', 'That pickup time has passed. Please pick a later slot.'); valid = false;
+        loadAvailability('pickup');
+      }
       if (!state.deliverySlot) { setErr('deliverySlot', 'Choose a delivery time slot.'); valid = false; }
       if (state.pickupSlot && state.deliverySlot && isSlotTooEarly(state.deliverySlot)) {
         setErr('deliverySlot', 'That delivery slot is inside the turnaround time. Pick a later one.'); valid = false;
