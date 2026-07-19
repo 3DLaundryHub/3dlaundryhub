@@ -556,7 +556,12 @@
             Final amount is confirmed after weighing at pickup.
             Pay by cash or GCash upon verification &mdash; our rider will assist you.
           </p>
-          <a href="#track" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;box-sizing:border-box;">Track this booking</a>
+          <details style="box-shadow:none;border:1px solid var(--border);margin-top:4px;">
+            <summary>Pay via GCash</summary>
+            <img src="gcash.png" alt="GCash payment QR for 3D Laundry" style="width:100%;max-width:300px;border-radius:10px;display:block;margin:0 auto 10px;">
+            <p style="text-align:center;">Scan with your GCash app once your final amount is confirmed. Transfer fees may apply.</p>
+          </details>
+          <a href="#track" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;box-sizing:border-box;margin-top:8px;">Track this booking</a>
         </div>
       </div>
     </section>
@@ -584,6 +589,11 @@
         <div class="summary-row"><span class="label" id="tbAmountLabel">Amount</span><span class="value" id="tbAmount"></span></div>
         <div class="summary-row"><span class="label">Payment</span><span class="value" id="tbPayment"></span></div>
         <div class="slot-hint" id="tbAmountNote"></div>
+        <div id="tbGcash" style="display:none;margin-top:12px;text-align:center;background:#eaf6fc;border-radius:12px;padding:14px;">
+          <div style="font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">Pay your confirmed amount via GCash</div>
+          <img src="gcash.png" alt="GCash payment QR for 3D Laundry" style="width:100%;max-width:280px;border-radius:10px;">
+          <div class="slot-hint">Scan with your GCash app. Transfer fees may apply.<br>Prefer cash? Pay the rider on delivery.</div>
+        </div>
         <div id="tbActions" style="display:none;margin-top:14px;">
           <button type="button" id="tbReschedBtn" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;margin-bottom:8px;">Reschedule</button>
           <button type="button" id="tbCancelBtn" class="btn" style="width:100%;padding:12px;border-radius:12px;font-size:14px;background:#fdeceb;color:var(--err);border:1.5px solid #f6c7c3;">Cancel this booking</button>
@@ -1013,6 +1023,9 @@
         note.textContent = 'Final amount will appear here after weighing at pickup.';
       }
       document.getElementById('tbPayment').textContent = b.payment;
+      // Show the GCash panel exactly when payment is due: amount confirmed, still unpaid, not cancelled
+      document.getElementById('tbGcash').style.display =
+        (b.finalAmount !== null && b.payment === 'Unpaid' && b.status !== 'Cancelled') ? 'block' : 'none';
       document.getElementById('tbActions').style.display = b.canModify ? 'block' : 'none';
       document.getElementById('tbLocked').style.display =
         (!b.canModify && b.status !== 'Cancelled' && b.status !== 'Delivered') ? 'block' : 'none';
