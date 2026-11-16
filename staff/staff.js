@@ -333,8 +333,10 @@
       ])
     ]));
 
-    if (b.status === 'Cancelled') {
-      parts.push(msg('warn', 'This booking is cancelled. Nothing can be changed.'));
+    var cancelled = b.status === (b.ownerOnlyStatus || 'Cancelled');
+    if (!cancelled || owner) parts.push(statusCard(b, owner));
+    if (cancelled) {
+      parts.push(msg('warn', owner ? 'This booking is cancelled. Change the status above to bring it back.' : 'This booking is cancelled. Only the owner can bring it back.'));
       shell(parts);
       return;
     }
@@ -355,6 +357,38 @@
       return;
     }
     drawFinal(slot, b, owner);
+  }
+
+  /** Status picker. The choices come from the Status dropdown of the sheet. */
+  function statusCard(b, owner) {
+    var locked = b.ownerOnlyStatus || 'Cancelled';
+    var box = el('div');
+    var select = el('select', { id: 'st' });
+    var options = (b.statusOptions || []).slice();
+    if (options.indexOf(b.status) === -1) options.unshift(b.status);
+    options.forEach(function (o) {
+      var blocked = o === locked && !owner;
+      var opt = el('option', { value: o, text: o + (blocked ? ' (owner only)' : '') });
+      if (blocked) opt.disabled = true;
+      if (o === b.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    var btn = el('button', { class: 'btn alt', type: 'button', disabled: true, text: 'Update status' });
+    select.addEventListener('change', function () { btn.disabled = select.value === b.status; });
+    btn.addEventListener('click', function () {
+      var next = select.value;
+      if (next === b.status) return;
+      run(btn, box, function () {
+        return api('setStatus', { code: b.code, status: next, expectedStatus: b.status })
+          .then(function (res) { drawBooking(res.booking, 'Status changed to: ' + res.booking.status); },
+            function (e) { if (e.code === 'CONFLICT') { showBooking(b.code); } throw e; });
+      });
+    });
+    return el('div', { class: 'card' }, [
+      el('h2', { text: 'Booking status' }),
+      el('label', { for: 'st', text: 'Current status' }),
+      select, btn, box
+    ]);
   }
 
   /** Quantity editor -> review -> confirm. `correction` = owner fixing a bill. */
