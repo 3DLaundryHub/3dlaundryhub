@@ -86,7 +86,18 @@ input[type=text], input[type=password], input[type=search], textarea {
   color: var(--text);
 }
 textarea { min-height: 70px; resize: vertical; }
-input:focus, textarea:focus, button:focus-visible { outline: 3px solid rgba(41, 171, 226, 0.45); outline-offset: 1px; }
+select {
+  width: 100%;
+  font: inherit;
+  font-weight: 600;
+  padding: 12px;
+  min-height: 50px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+}
+input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px solid rgba(41, 171, 226, 0.45); outline-offset: 1px; }
 
 .btn {
   display: block;
