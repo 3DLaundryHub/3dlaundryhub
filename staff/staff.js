@@ -373,7 +373,7 @@
       if (o === b.status) opt.selected = true;
       select.appendChild(opt);
     });
-    var btn = el('button', { class: 'btn alt', type: 'button', disabled: true, text: 'Update status' });
+    var btn = el('button', { class: 'btn ok', type: 'button', disabled: true, text: 'Update Status' });
     select.addEventListener('change', function () { btn.disabled = select.value === b.status; });
     btn.addEventListener('click', function () {
       var next = select.value;
