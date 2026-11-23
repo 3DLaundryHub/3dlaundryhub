@@ -268,6 +268,7 @@
             el('div', { class: 'row1' }, [el('span', { text: b.code + '  ' + b.name }), el('span', { class: 'amt', text: money })]),
             el('div', { class: 'row2' }, [
               b.rush ? el('span', { class: 'badge rush', text: 'RUSH' }) : null,
+              b.proof ? el('span', { class: 'badge proof', text: 'PROOF RECEIVED' }) : null,
               b.warn ? el('span', { class: 'badge warn', text: 'Needs owner' }) : null,
               el('span', { text: 'Pickup ' + b.pickupDate + ', ' + b.pickupSlot + ' - ' + b.status })
             ])
@@ -517,8 +518,16 @@
       slot.appendChild(bill);
     }
 
+    var pr = b.proof;
     if (b.payment === 'Unpaid') {
-      if (b.integrity === 'ok') slot.appendChild(payCard(b));
+      if (pr && pr.status === 'Submitted' && (b.integrity === 'ok' || b.integrity === 'manual')) slot.appendChild(proofCard(b, pr));
+      else if (pr && pr.status === 'Short') slot.appendChild(el('div', { class: 'card' }, [
+        el('h2', { text: 'Part payment received' }),
+        pr.image ? el('img', { class: 'proofimg', src: pr.image, alt: 'Customer receipt' }) : null,
+        kv([['Received', peso(pr.receivedBefore)], ['Balance', peso(pr.balance)], ['Last ref', pr.ref]]),
+        msg('warn', 'The customer was asked to send the balance and upload that receipt.')
+      ]));
+      if (b.integrity === 'ok' && !(pr && pr.status === 'Submitted')) slot.appendChild(payCard(b));
     } else {
       var r = b.paymentRecord;
       var paid = el('div', { class: 'card' }, [el('h2', { text: 'Payment' })]);
@@ -527,6 +536,7 @@
           ['Paid by', r.method], ['Amount', peso(r.amount)], r.ref ? ['Reference', r.ref] : null, ['Recorded', r.by + ', ' + r.at]
         ]));
         if (!r.valid) paid.appendChild(msg('warn', 'This payment record does not match the Google Sheet. Tell the owner.'));
+        if (pr && pr.status === 'Overpaid') paid.appendChild(msg('warn', pr.note + '. Any refund needs the owner\'s OK.'));
       } else {
         paid.appendChild(msg('warn', 'Marked as "' + b.payment + '" directly in the Google Sheet. No payment was recorded through this app.'));
       }
@@ -545,6 +555,50 @@
     } else if (owner) {
       slot.appendChild(el('p', { class: 'muted center', text: 'To correct the amount, void the payment first.' }));
     }
+  }
+
+  /** A customer uploaded a GCash receipt: staff check the money arrived. */
+  function proofCard(b, pr) {
+    var box = el('div');
+    var got = field('Amount that arrived in GCash', { id: 'got', type: 'text', inputmode: 'decimal', autocomplete: 'off', maxlength: '10' });
+    got.input.value = String(pr.balance);
+    var tick = el('input', { type: 'checkbox', id: 'seen' });
+    var btn = el('button', { class: 'btn ok', type: 'button', disabled: true, text: 'Payment received \u2014 confirm' });
+    tick.addEventListener('change', function () { btn.disabled = !tick.checked; });
+    btn.addEventListener('click', function () {
+      var n = Number(String(got.input.value).replace(/[,\s\u20B1]/g, ''));
+      run(btn, box, function () {
+        if (!(n > 0)) throw new Error('Enter the amount that actually arrived.');
+        return api('proofReview', { code: b.code, proofId: pr.id, decision: 'accept', received: n, expectedAmount: b.amount })
+          .then(function (res) {
+            var p2 = res.booking.proof;
+            drawBooking(res.booking, p2 && p2.status === 'Short' ? 'Part payment recorded. ' + p2.note + '.' : 'Payment recorded as received.');
+          }, function (e) { if (e.code === 'CONFLICT') { showBooking(b.code); } throw e; });
+      });
+    });
+    var warns = [];
+    if (pr.amountChanged) warns.push(msg('err', 'The final amount changed after this receipt was uploaded (it was for ' + peso(pr.due) + '). Recheck with the customer, then reject this proof.'));
+    if (pr.duplicate) warns.push(msg('err', 'This reference number was already used on another booking. Do not accept it without the owner.'));
+    if (!pr.valid) warns.push(msg('err', 'This proof record was changed outside the app. Ask the owner.'));
+    if (pr.screenAmount !== null && pr.screenAmount !== pr.balance) warns.push(msg('warn', 'The receipt seems to show ' + peso(pr.screenAmount) + ' (read automatically - check the picture).'));
+    var card = el('div', { class: 'card' }, [
+      el('h2', null, ['Payment proof ', el('span', { class: 'badge proof', text: 'PROOF RECEIVED' })]),
+      pr.image ? el('img', { class: 'proofimg', src: pr.image, alt: 'Customer receipt' }) : msg('warn', 'The receipt picture could not be loaded.'),
+      kv([
+        ['Method', 'GCash'], ['Reference', pr.ref], ['To collect', peso(pr.balance) + (pr.receivedBefore ? ' (balance; ' + peso(pr.receivedBefore) + ' received earlier)' : '')],
+        ['Uploaded', pr.at]
+      ])
+    ].concat(warns).concat([
+      msg('warn', 'Open the shop\'s GCash app and check that this amount with this reference really arrived. The screenshot alone is not proof.'),
+      got,
+      el('label', { class: 'check', for: 'seen' }, [tick, el('span', { text: 'I checked GCash and saw this money arrive.' })]),
+      btn, box,
+      ownerReasonAction('Not received \u2014 reject proof', 'Why is this proof rejected? (the customer sees this)', 'Reject proof', function (reason) {
+        return api('proofReview', { code: b.code, proofId: pr.id, decision: 'reject', reason: reason })
+          .then(function (res) { drawBooking(res.booking, 'Proof rejected. The customer can upload again.'); });
+      })
+    ]));
+    return card;
   }
 
   function payCard(b) {
