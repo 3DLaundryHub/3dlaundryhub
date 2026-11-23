@@ -26,7 +26,7 @@
     return n;
   }
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
-  function peso(n) { return '‚Ç±' + Number(n).toLocaleString('en-PH'); }
+  function peso(n) { return String.fromCharCode(8369) + Number(n).toLocaleString('en-PH'); }
   function msg(kind, text) { return el('div', { class: 'msg ' + kind, role: kind === 'err' ? 'alert' : 'status', text: text }); }
   function show(kids) { clear(app); kids.forEach(function (k) { if (k) app.appendChild(k); }); window.scrollTo(0, 0); }
 
@@ -108,7 +108,7 @@
     }
     if (b.state === 'paid') {
       show([el('div', { class: 'card done' }, [
-        el('div', { class: 'c', text: '‚úì' }), el('h1', { text: 'Paid - thank you!' }),
+        el('div', { class: 'c', text: '\u2713' }), el('h1', { text: 'Paid - thank you!' }),
         el('p', { class: 'muted', text: 'Booking ' + b.code + ' is marked paid (' + b.payment + ').' })
       ])]);
       return;
@@ -214,9 +214,9 @@
   // ---------- step 4: waiting for staff ----------
   function showWaiting(b) {
     show([el('div', { class: 'card done' }, [
-      el('div', { class: 'c wait', text: '‚úì' }),
+      el('div', { class: 'c wait', text: '\u2713' }),
       el('h1', { text: 'Thank you! We received your payment proof.' }),
-      el('p', { class: 'muted', text: 'Booking ' + b.code + (b.last && b.last.ref ? ' ¬∑ GCash ref ' + b.last.ref : '') }),
+      el('p', { class: 'muted', text: 'Booking ' + b.code + (b.last && b.last.ref ? ' \u00b7 GCash ref ' + b.last.ref : '') }),
       msg('ok', 'Staff will confirm once received. Your booking stays Unpaid until then. Track my booking will show Paid when it is confirmed.'),
       el('a', { class: 'btn alt', href: '../#track', text: 'Back to Track my booking' })
     ])]);
