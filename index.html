@@ -593,6 +593,7 @@
           <div style="font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;">Pay your confirmed amount via GCash</div>
           <img src="gcash.png" alt="GCash payment QR for 3D Laundry" style="width:100%;max-width:280px;border-radius:10px;">
           <div class="slot-hint">Scan with your GCash app. Transfer fees may apply.<br>Prefer cash? Pay the rider on delivery.</div>
+          <button type="button" id="tbPayBtn" class="btn btn-primary" style="width:100%;padding:14px;border-radius:12px;font-size:15px;margin-top:12px;">Pay now</button>
         </div>
         <div id="tbActions" style="display:none;margin-top:14px;">
           <button type="button" id="tbReschedBtn" class="btn btn-ghost" style="width:100%;padding:12px;border-radius:12px;font-size:14px;margin-bottom:8px;">Reschedule</button>
@@ -710,7 +711,7 @@
       d.setUTCDate(d.getUTCDate() + n);
       return d.toISOString().slice(0, 10);
     }
-    function peso(n) { return '₱' + n.toLocaleString('en-PH'); }
+    function peso(n) { return '\u20B1' + n.toLocaleString('en-PH'); }
     function gapHours() { return state.rush ? RUSH_GAP_HOURS : NORMAL_GAP_HOURS; }
 
     function slotStartMs(dateStr, slotIdx) {
@@ -764,7 +765,7 @@
         var qty = document.createElement('div');
         qty.className = 'qty';
         var minus = document.createElement('button');
-        minus.type = 'button'; minus.textContent = '−';
+        minus.type = 'button'; minus.textContent = '\u2212';
         var q = document.createElement('span');
         q.className = 'q'; q.textContent = state.qty[s.id];
         var plus = document.createElement('button');
@@ -882,7 +883,7 @@
     rushToggle.addEventListener('change', function () {
       state.rush = rushToggle.checked;
       document.getElementById('turnaroundHint').textContent = state.rush
-        ? '⚡ Rush: delivery as fast as 5 hours after pickup.'
+        ? '\u26A1 Rush: delivery as fast as 5 hours after pickup.'
         : 'Delivery is at least 24 hours after pickup.';
       updateTotal();
       syncDeliveryConstraints();
@@ -970,7 +971,7 @@
         var b = res.booking;
         document.getElementById('confirmName').textContent = b.name;
         document.getElementById('confirmCode').textContent = b.code;
-        document.getElementById('confirmServices').textContent = services.map(function (s) { return s.qty + '× ' + s.name; }).join(', ') + (state.rush ? ' (RUSH)' : '');
+        document.getElementById('confirmServices').textContent = services.map(function (s) { return s.qty + '\u00D7 ' + s.name; }).join(', ') + (state.rush ? ' (RUSH)' : '');
         document.getElementById('confirmPickup').textContent = b.pickupDate + ', ' + b.pickupSlot;
         document.getElementById('confirmDelivery').textContent = b.deliveryDate + ', ' + b.deliverySlot;
         document.getElementById('confirmTotal').textContent = peso(b.estimatedTotal) + ' (estimated)';
@@ -1015,7 +1016,7 @@
         document.getElementById('tbAmountLabel').textContent = 'Final Amount';
         amountEl.textContent = peso(b.finalAmount);
         amountEl.style.color = 'var(--ok)';
-        note.textContent = '✓ Confirmed after weighing' + (b.payment === 'Unpaid' ? ' — payable by cash or GCash on delivery.' : '.');
+        note.textContent = '\u2713 Confirmed after weighing' + (b.payment === 'Unpaid' ? ' \u2014 payable by cash or GCash on delivery.' : '.');
       } else {
         document.getElementById('tbAmountLabel').textContent = 'Estimated Amount';
         amountEl.textContent = b.estimatedTotal !== null ? peso(b.estimatedTotal) : 'To be confirmed';
@@ -1033,6 +1034,11 @@
       document.getElementById('reschedPanel').style.display = 'none';
     }
 
+    document.getElementById('tbPayBtn').addEventListener('click', function () {
+      try { sessionStorage.setItem('pay3d', JSON.stringify({ code: track.code, phone: track.phone })); } catch (e) {}
+      window.location.href = 'pay/';
+    });
+
     document.getElementById('trackBtn').addEventListener('click', function () {
       var code = document.getElementById('trackCode').value.trim().toUpperCase();
       var phone = document.getElementById('trackPhone').value.trim();
@@ -1040,7 +1046,7 @@
       err.textContent = '';
       if (!code || !phone) { err.textContent = 'Enter both your booking code and contact number.'; return; }
       var btn = document.getElementById('trackBtn');
-      btn.disabled = true; btn.textContent = 'Searching…';
+      btn.disabled = true; btn.textContent = 'Searching\u2026';
       track.code = code; track.phone = phone;
       api({ action: 'find', code: code, contact: phone })
         .then(function (res) {
@@ -1057,7 +1063,7 @@
     document.getElementById('tbCancelBtn').addEventListener('click', function () {
       if (!window.confirm('Cancel booking ' + track.booking.code + '? This cannot be undone.')) return;
       var btn = document.getElementById('tbCancelBtn');
-      btn.disabled = true; btn.textContent = 'Cancelling…';
+      btn.disabled = true; btn.textContent = 'Cancelling\u2026';
       api({ action: 'cancel', code: track.code, contact: track.phone })
         .then(function (res) {
           btn.disabled = false; btn.textContent = 'Cancel this booking';
@@ -1137,7 +1143,7 @@
         err.textContent = 'Choose new pickup and delivery dates and time slots.'; return;
       }
       var btn = document.getElementById('rsSaveBtn');
-      btn.disabled = true; btn.textContent = 'Saving…';
+      btn.disabled = true; btn.textContent = 'Saving\u2026';
       api({
         action: 'reschedule', code: track.code, contact: track.phone,
         pickupDate: rsPickupDate.value, pickupSlot: rs.pickupSlot,
