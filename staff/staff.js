@@ -111,10 +111,10 @@
     var u = state.user;
     var nav = [
       el('div', { class: 'brand' }, ['3D Laundry Hub', el('small', { text: 'Staff: ' + u.name + (u.role === 'owner' ? ' (owner)' : '') })]),
-      navBtn('Bookings', 'home', showHome)
+      navBtn('Bookings', 'home', function () { showHome(); })
     ];
     if (u.role === 'owner') {
-      nav.push(navBtn('Staff', 'staff', showStaff));
+      nav.push(navBtn('Staff', 'staff', function () { showStaff(); }));
       nav.push(navBtn('Activity', 'log', showLog));
     }
     nav.push(navBtn(u.role === 'owner' ? 'My password' : 'My PIN', 'change', function () { showChange(false); }));
@@ -242,10 +242,10 @@
       [search, el('button', { class: 'btn alt', type: 'submit', text: 'Search' })]);
     shell([flash ? msg('ok', flash, 'top') : null, tabs, form, listBox]);
 
-    var names = { todo: 'To finalize', unpaid: 'Unpaid', paid: 'Paid' };
+    var names = { todo: 'To finalize', agree: 'Ask customer', unpaid: 'Unpaid', paid: 'Paid' };
     function drawTabs(counts) {
       clear(tabs);
-      ['todo', 'unpaid', 'paid'].forEach(function (f) {
+      ['todo', 'agree', 'unpaid', 'paid'].forEach(function (f) {
         tabs.appendChild(el('button', { type: 'button', class: state.filter === f ? 'on' : '', onclick: function () { state.filter = f; load(); } },
           [el('span', { class: 'n', text: counts ? String(counts[f]) : '-' }), names[f]]));
       });
@@ -480,15 +480,22 @@
       }
       if (correction) card.appendChild(el('p', { class: 'muted', text: 'Reason: ' + reasonText }));
       var tick = el('input', { type: 'checkbox', id: 'tick' });
-      var btn = el('button', { class: 'btn ok', type: 'button', disabled: true, text: 'Confirm ' + peso(t.total) + ' as final' });
+      var btn = el('button', { class: 'btn ok', type: 'button', disabled: true, text: b.twoStep ? 'Save ' + peso(t.total) + ' (ask customer next)' : 'Confirm ' + peso(t.total) + ' as final' });
       tick.addEventListener('change', function () { btn.disabled = !tick.checked; });
       card.appendChild(el('label', { class: 'check', for: 'tick' }, [tick, el('span', { text: 'I counted and weighed these items myself and the quantities are correct.' })]));
-      card.appendChild(el('p', { class: 'muted', text: correction ? '' : 'After you confirm, the customer sees this amount and only the owner can change it.' }));
+      card.appendChild(el('p', { class: 'muted', text: b.twoStep
+        ? 'Next: tell the customer this amount. It becomes final (and payable) only after you tap "Customer agreed".'
+        : (correction ? '' : 'After you confirm, the customer sees this amount and only the owner can change it.') }));
       btn.addEventListener('click', function () {
         if (!tick.checked) return;
         run(btn, box, function () {
           return api('finalize', { code: b.code, items: items, expectedTotal: t.total, version: b.version, reason: correction ? reasonText : '' })
-            .then(function (res) { drawBooking(res.booking, 'Final amount saved: ' + peso(res.booking.amount)); },
+            .then(function (res) {
+              var rb = res.booking;
+              drawBooking(rb, rb.integrity === 'awaiting'
+                ? 'Saved ' + peso(rb.bill.amount) + '. Now tell the customer, then tap "Customer agreed".'
+                : 'Final amount saved: ' + peso(rb.amount));
+            },
               function (e) { if (e.code === 'CONFLICT') { showBooking(b.code); } throw e; });
         });
       });
@@ -505,7 +512,8 @@
   function drawFinal(slot, b, owner) {
     clear(slot);
     if (b.bill) {
-      var bill = el('div', { class: 'card' }, [el('h2', { text: 'Final bill' })]);
+      var waiting = b.integrity === 'awaiting';
+      var bill = el('div', { class: 'card' }, [el('h2', { text: waiting ? 'Counted bill (not final yet)' : 'Final bill' })]);
       b.bill.items.forEach(function (it) {
         bill.appendChild(el('div', { class: 'sum' }, [
           el('span', { text: it.qty + ' x ' + it.name + ' @ ' + peso(it.price) }),
@@ -513,11 +521,12 @@
         ]));
       });
       if (b.bill.rush) bill.appendChild(el('div', { class: 'sum' }, [el('span', { text: 'Rush service' }), el('span', { class: 'amt', text: '+' + peso(b.bill.amount - b.bill.subtotal) })]));
-      bill.appendChild(el('div', { class: 'sum total final' }, [el('span', { text: 'FINAL AMOUNT' }), el('span', { class: 'amt', text: peso(b.bill.amount) })]));
+      bill.appendChild(el('div', { class: 'sum total final' }, [el('span', { text: waiting ? 'COUNTED AMOUNT' : 'FINAL AMOUNT' }), el('span', { class: 'amt', text: peso(b.bill.amount) })]));
       bill.appendChild(el('p', { class: 'muted', text: 'Set by ' + b.bill.by + ' on ' + b.bill.at + (b.bill.version > 1 ? ' (correction no. ' + (b.bill.version - 1) + ': ' + b.bill.reason + ')' : '') }));
       slot.appendChild(bill);
     }
 
+    if (b.integrity === 'awaiting' && b.bill) slot.appendChild(agreeCard(b));
     var pr = b.proof;
     if (b.payment === 'Unpaid') {
       if (pr && pr.status === 'Submitted' && (b.integrity === 'ok' || b.integrity === 'manual')) slot.appendChild(proofCard(b, pr));
@@ -599,6 +608,33 @@
       })
     ]));
     return card;
+  }
+
+  /** Two-step: the customer must agree to the counted amount before it becomes final. */
+  function agreeCard(b) {
+    var amt = b.bill.amount;
+    var box = el('div');
+    var tick = el('input', { type: 'checkbox', id: 'agreed' });
+    var btn = el('button', { class: 'btn ok', type: 'button', disabled: true, text: 'Customer agreed \u2014 make it final' });
+    tick.addEventListener('change', function () { btn.disabled = !tick.checked; });
+    btn.addEventListener('click', function () {
+      run(btn, box, function () {
+        return api('agree', { code: b.code, version: b.bill.version, expectedAmount: amt, confirm: tick.checked })
+          .then(function (res) { drawBooking(res.booking, 'Final amount confirmed. The customer can now see and pay ' + peso(amt) + '.'); },
+            function (e) { if (e.code === 'CONFLICT') { showBooking(b.code); } throw e; });
+      });
+    });
+    var est = b.estimatedTotal !== null && b.estimatedTotal !== amt
+      ? msg('warn', 'This is ' + peso(Math.abs(amt - b.estimatedTotal)) + (amt > b.estimatedTotal ? ' MORE' : ' LESS') + ' than the booking estimate of ' + peso(b.estimatedTotal) + '.')
+      : null;
+    return el('div', { class: 'card' }, [
+      el('h2', null, ['Waiting for the customer\'s OK ', el('span', { class: 'badge warn', text: 'NOT FINAL YET' })]),
+      el('p', { text: 'Tell the customer the final amount of ' + peso(amt) + ' (text or call). They do not see it yet and cannot pay until you confirm here.' }),
+      est,
+      el('label', { class: 'check', for: 'agreed' }, [tick, el('span', { text: 'The customer agreed to ' + peso(amt) + '.' })]),
+      btn, box,
+      el('p', { class: 'muted', text: 'If the customer disagrees, ask the owner to correct the bill.' })
+    ]);
   }
 
   function payCard(b) {
