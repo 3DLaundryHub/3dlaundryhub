@@ -127,7 +127,7 @@ input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px s
 .msg.warn { background: var(--warn-bg); color: #6b4400; }
 .msg.top { margin: 0 0 14px; }
 
-.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .tabs button {
   flex: 1;
   font: inherit;
@@ -141,7 +141,7 @@ input:focus, textarea:focus, select:focus, button:focus-visible { outline: 3px s
   color: var(--muted);
 }
 .tabs button.on { border-color: var(--pink); color: var(--pink-dark); background: #fff0f8; }
-.tabs .n { display: block; font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; }
+.tabs .n { display: block; font-size: 17px; color: var(--text); font-variant-numeric: tabular-nums; }
 
 .search { display: flex; gap: 8px; margin-bottom: 12px; }
 .search .btn { width: auto; margin: 0; min-height: 0; padding: 0 16px; }
